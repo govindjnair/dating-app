@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Page</title>
+    <style>
+        body {
+            font-family: 'Caveat', cursive;
+            background-color: #f8e1e7; /* Light pink color */
+            background: linear-gradient(135deg, #f8e1e7, #f0c4d7);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .profile-container {
+            display: flex;
+            max-width: 1000px;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .left-container, .right-container {
+            padding: 20px;
+        }
+        .left-container {
+            width: 40%;
+            text-align: center;
+            background-color: #f9f9f9;
+            border-right: 1px solid #ddd;
+        }
+        .profile-image {
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+        .profile {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .right-container {
+            width: 60%;
+            text-align: left;
+
+        }
+        .profile-about {
+            font-size: 2.0em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.7em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tag {
+            background-color: #f8e1e7; /* Light pink color */
+            background: linear-gradient(135deg, #f8e1e7, #f0c4d7);
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .buttons {
+            padding-top: 60px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .button {
+            font-family: 'Caveat', cursive;
+            background-color: #f8e1e7; /* Light pink color */
+            background: linear-gradient(135deg, #f8e1e7, #f0c4d7);
+            border: groove;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            color: #333;
+            cursor: pointer;
+        }
+        .logout-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="logout-container">
+        <form method="post" action="{{ url_for('logout') }}">
+            <button class="button" type="submit">Logout</button>
+        </form>
+    </div>
+    <div class="profile-container">
+        <div class="left-container">
+            <img src="{{ url_for('uploaded_file', filename=file_name) }}" alt="Profile Image" class="profile-image">
+            <h2>
+            <div class="profile">{{ name }}, {{age}}</div>
+            </h2>
+        </div>
+        <div class="right-container">
+
+            <div class="profile-about">
+                {{ text_data|safe }}
+            </div>
+            <div class="section-title">Things I Love :</div>
+            <div class="tags">
+                {% for item in love %}
+                <div class="tag">{{ item }}</div>
+                {% endfor %}
+            </div>
+            <div class="section-title">Things I Hate :</div>
+            <div class="tags">
+                {% for item in hate %}
+                <div class="tag">{{ item }}</div>
+                {% endfor %}
+            </div>
+             <div class="buttons">
+                 <form method="post" action="{{ url_for('profile', username=name) }}">
+                    <button class="button" type="submit" value="edit" name="action">Edit</button>
+                    <button class="button" type="submit" value="start" name="action">Start</button>
+                 </form>
+            </div>
+            </div>
+
+        </div>
+
+    </div>
+</body>
+</html>

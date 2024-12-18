@@ -1,0 +1,29 @@
+{% from "bootstrap5/form.html" import render_form %}
+{% block content %}
+{%include "header.html" %}
+  <style>
+
+        input[type="text"] {
+            width: 100%;
+            max-width: 150px;
+            padding: 6px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+    </style>
+
+<body style="background-color: #fff;">
+    <div class="container" style="background-color: #f0f0f0; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); text-align: center; max-width: 500px; width: 100%;">
+        <h1 style="color: #333;">Set Up Your Profile</h1>
+        <div class="form-container" style="margin-top: 20px;">
+            <h3>{{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}</h3>
+        </div>
+    </div>
+</body>
+
+
+
+
+{% endblock %}

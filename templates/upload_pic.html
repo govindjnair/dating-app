@@ -1,0 +1,106 @@
+{% from "bootstrap5/form.html" import render_form %}
+{% block content %}
+{% include "header.html" %}
+
+<style>
+    input[type="text"] {
+        width: 100%;
+        max-width: 150px;
+        padding: 6px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+    .upload-frame {
+        width: 100%;
+        max-width: 400px; /* Increased size */
+        height: 400px; /* Increased size */
+        border-radius: 15px;
+        background-color: #ddd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px auto;
+        position: relative;
+    }
+    .upload-frame input[type="file"] {
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    .container {
+        display: flex;
+        justify-content: space-between;
+        background-color: #f0f0f0;
+        padding: 40px; /* Increased padding */
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 1000px; /* Increased max-width */
+        width: 100%;
+        min-height: 500px; /* Increased minimum height */
+    }
+    .left-container, .right-container {
+        width: 48%;
+    }
+</style>
+
+<body style="background-color: #fff;">
+    <div class="container">
+        <div class="left-container">
+            <h2>Upload an image</h2>
+            <div class="upload-frame">
+                {% if user.pp_path is none %}
+                    <form method="POST" enctype="multipart/form-data">
+                        <span>Choose Photo</span>
+                        <input type="file" name="photo" accept="image/*" id="photo-input">
+                        <img id="photo-preview" src="" alt="Photo Preview" style="display: none; width: 100%; height: 100%; border-radius: 15px; object-fit: cover;">
+                        {% else %}
+                        <form method="POST" enctype="multipart/form-data">
+                        <img id="photo-review" src="{{ url_for('uploaded_file', filename=user.pp_path) }}" alt="Profile Picture" style="width: 100%; height: 100%; border-radius: 15px; object-fit: cover;">
+                        <input type="file" name="photo" accept="image/*" id="photo-output">
+                {% endif %}
+
+                </div>
+
+        </div>
+        <div class="right-container">
+            <h2>About You</h2>
+            <div class="form-container" style="margin-top: 20px;">
+                {{ ckeditor.load(pkg_type="basic") }} {{ ckeditor.config(name='body') }}
+                {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+                 {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                    {% for message in messages %}
+                        <p style="color:red; font-size: 1.2em; margin-top: 40px;"  align="center"> <strong>{{ message }}</strong></p>
+                    {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('photo-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('photo-preview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.querySelector('.upload-frame span').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+
+{% endblock %}

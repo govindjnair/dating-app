@@ -1,0 +1,66 @@
+body {
+            font-family: 'Caveat', cursive;
+            text-align: center;
+            background-color: #f8e1e7; /* Light pink color */
+            background: linear-gradient(135deg, #f8e1e7, #f0c4d7);
+            color: #333;
+            padding: 20px;
+        }
+        h1 {
+            color: #000;
+            font-size: 4em;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #000;
+            font-size: 2em;
+        }
+        a {
+            color: #000;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 1.5em;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            margin-top: 20px;
+            width: 300px;
+            height: auto;
+            border-radius: 15px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+       form label {
+    font-size: 1.8em; /* Slightly increase the font size of the labels */
+    margin-bottom: 0.5em;
+    margin-right: 0.2em;
+}
+
+form .form-control {
+    font-size: 1em; /* Reduce the font size of the input fields */
+    padding: 0.5em; /* Keep padding smaller */
+    margin-bottom: 0.5em;
+    width: 100%; /* Ensure uniform width */
+    max-width: 300px; /* Reduce the maximum width */
+    margin:  auto; /* Center the input fields */
+    height: 40px;
+    box-sizing: border-box;
+    text-align: left,
+}
+
+form .btn {
+    font-size: 1em; /* Reduce the font size of the button */
+    padding: 0.5em 1em; /* Keep padding smaller */
+    max-width: 150px; /* Reduce the maximum width for the button */
+    margin: 20px auto 10px; /* Center the button */
+    display: block; /* Make the button a block element */
+}

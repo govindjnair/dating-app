@@ -1,0 +1,15 @@
+{% from "bootstrap5/form.html" import render_form %}
+{% block content %}
+{%include "header.html" %}
+
+<body>
+    <h1>Register</h1>
+    <h2>Start messing around</h2>
+    <div class="mt-4">
+        {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+    </div>
+</body>
+
+
+
+{% endblock %}

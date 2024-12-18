@@ -1,0 +1,22 @@
+{% from "bootstrap5/form.html" import render_form %}
+{% block content %}
+{%include "header.html" %}
+
+<body>
+    <h1>Login</h1>
+    <h2>Let's go </h2>
+    <div class="mt-4">
+        {{ render_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p style="color:red; font-size: 1.2em; margin-top: 40px;"  align="center"> <strong>{{ message }}</strong></p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+
+
+
+{% endblock %}
