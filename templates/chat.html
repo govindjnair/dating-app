@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Page</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f8e1e7; /* Light pink color */
+            background: linear-gradient(135deg, #f8e1e7, #f0c4d7);
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            width: 60%; /* Set a fixed width */
+            max-width: 1200px; /* Optional: limit the maximum width */
+            margin: auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .chat-header {
+            padding: 10px;
+            background-color: #ff69b4; /* Light pink color */
+            color: white;
+            text-align: center;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 10px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            flex-direction: column; /* Stack messages vertically */
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #f0c4d7;
+            max-width: 70%; /* Limit the width of the messages */
+            word-wrap: break-word; /* Ensure long words break to the next line */
+            font-size: 17px;
+        }
+        .message.sent {
+            background-color: #ff69b4;
+            color: white;
+            align-self: flex-end;
+        }
+        .message.received {
+            background-color: #f0c4d7;
+            color: black;
+            align-self: flex-start;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            align-self: flex-end;
+        }
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        .chat-input input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-right: 10px;
+        }
+        .chat-input button {
+            padding: 10px 20px;
+            background-color: #ff69b4; /* Light pink color */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .chat-input button:hover {
+            background-color: #ff85c1; /* Slightly darker pink on hover */
+            transform: scale(1.05); /* Slightly enlarge on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            Chat with {{ target }}
+        </div>
+        <div class="chat-messages" id="chatMessages">
+        </div>
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script>
+        const socket = io.connect('http://' + document.domain + ':' + location.port); // Declare the socket variable globally
+        const roomCode = "{{ room_code }}"; // has to be a string
+        const user = "{{ user }}";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            joinRoom(roomCode);
+        });
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+        function joinRoom(room) {
+            socket.emit('join_room', {username: user, room: room});
+        }
+        function leaveRoom(room) {
+            socket.emit('leave_room', {username: user, room: room});
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const messageText = messageInput.value.trim();
+            if (messageText !== '') {
+                socket.emit('message', {room: roomCode, user:user, message: messageText});
+                messageInput.value = '';
+                messageInput.focus();
+                // Scroll to the bottom of the chat
+                document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+            }
+        }
+        socket.on('message', (data) => {  // for the message we receive
+            console.log('Received message:', data.message);  // Debugging line
+            const messageElement = document.createElement('div');
+            if (data.user == user) {
+                messageElement.classList.add('message', 'sent');
+            } else {
+                messageElement.classList.add('message', 'received');
+            }
+            const messageContent = document.createElement('div');
+            messageContent.textContent = data.message;
+            const timeStamp = document.createElement('div');
+            timeStamp.classList.add('timestamp')
+            timeStamp.textContent = data.time_stamp;
+            messageElement.appendChild(messageContent);
+            messageElement.appendChild(timeStamp);
+            document.getElementById('chatMessages').appendChild(messageElement);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        });
+
+    </script>
+</body>
+</html>

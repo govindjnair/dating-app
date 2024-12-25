@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, abort
+from flask import Flask, render_template, request, flash, redirect, url_for, session, send_from_directory, abort, \
+    jsonify
 from werkzeug.utils import secure_filename
 from forms import RegistrationForm, LoginForm, FirstProfileForm, LoveHateForm, AboutMeForm
 from flask_bootstrap import Bootstrap5
@@ -15,6 +16,10 @@ from typing import List
 import os
 import uuid
 from dotenv import load_dotenv
+from pymongo import MongoClient
+from flask_pymongo import PyMongo
+from flask_socketio import SocketIO, send, emit, join_room, leave_room
+import datetime as dt
 
 load_dotenv()
 
@@ -25,8 +30,19 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 ckeditor = CKEditor(app)
 bootstrap = Bootstrap5(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+socketio = SocketIO(app)
+
+# MongoDB setup
+app.config['MONGO_URI'] = "mongodb://localhost:27017/userLikes"
+mongo = PyMongo(app)
+liked_profiles = mongo.db.liked_profiles  # This accesses the liked_profiles collection within the userLikes database.
+chats = mongo.db.chats
 
 
+# A collection in MongoDB is similar to a table in a relational database like SQLite.
+
+
+# SQLite setup
 class Base(DeclarativeBase):
     pass
 
@@ -234,6 +250,12 @@ def upload_pics(username):
                         pp_path=pp_path, about=new_form.about.data))
                 db.session.execute(stmt)
                 db.session.commit()
+                new_like = {
+                    "user_id": user.id,
+                    "liked_users": []
+                }
+                liked_profiles.insert_one(new_like)
+                print(liked_profiles)
                 return redirect(url_for('profile', username=username))
             else:
                 return render_template("upload_pic.html", form=new_form, user=user)
@@ -282,7 +304,7 @@ def cupid(user):
     # need to modify the query which shows the same user , user!= itself
     if user_gender == "male":
         if user_is_into == "female":  # straight
-            print(f"User is into: {user_is_into}, User gender: {user_gender}")
+            # print(f"User is into: {user_is_into}, User gender: {user_gender}")
             result = db.session.execute(
                 db.select(User).where(
                     (User.gender == "female") & ((User.interested_in == "male") | (User.interested_in == "both"))
@@ -291,7 +313,7 @@ def cupid(user):
             potential_matches = result.scalars().all()
 
         elif user_is_into == "male":  # gay
-            print(f"User is into: {user_is_into}, User gender: {user_gender}")
+            # print(f"User is into: {user_is_into}, User gender: {user_gender}")
             result = db.session.execute(
                 db.select(User).where(
                     (User.name != user_name) & (User.gender == "male") & (
@@ -301,7 +323,7 @@ def cupid(user):
             potential_matches = result.scalars().all()
 
         else:  # bi
-            print(f"User is into: {user_is_into}, User gender: {user_gender}")
+            # print(f"User is into: {user_is_into}, User gender: {user_gender}")
             result = db.session.execute(
                 db.select(User).where(
                     (User.name != user_name) & (((User.gender == "female") & (User.interested_in != "female")) |
@@ -312,7 +334,7 @@ def cupid(user):
 
     if user_gender == "female":
         if user_is_into == "male":  # straight
-            print(f"User is into: {user_is_into}, User gender: {user_gender}")
+            # print(f"User is into: {user_is_into}, User gender: {user_gender}")
             result = db.session.execute(
                 db.select(User).where(
                     (User.gender == "male") & ((User.interested_in == "female") | (User.interested_in == "both"))
@@ -321,7 +343,7 @@ def cupid(user):
             potential_matches = result.scalars().all()
 
         elif user_is_into == "female":  # lesbian
-            print(f"User is into: {user_is_into}, User gender: {user_gender}")
+            # print(f"User is into: {user_is_into}, User gender: {user_gender}")
             result = db.session.execute(
                 db.select(User).where(
                     (User.name != user_name) & (User.gender == "female") & (
@@ -332,7 +354,7 @@ def cupid(user):
             potential_matches = result.scalars().all()
 
         else:  # bi
-            print(f"User is into: {user_is_into}, User gender: {user_gender}")
+            # print(f"User is into: {user_is_into}, User gender: {user_gender}")
             result = db.session.execute(
                 db.select(User).where(
                     (User.name != user_name) & (((User.gender == "male") & (User.interested_in != "male")) |
@@ -341,8 +363,8 @@ def cupid(user):
             )
             potential_matches = result.scalars().all()
 
-    for match in potential_matches:
-        print(match.name)
+    # for match in potential_matches:
+    #     print(match.name)
     return potential_matches
 
 
@@ -351,27 +373,67 @@ def cupid(user):
 def swiper(username):
     result = db.session.execute(db.select(User).where(User.name == username))
     user = result.scalar_one_or_none()
-
+    mutual_match = False
+    room_code = None
     if user:
         targets = cupid(user)
         print(targets)
 
         if 'target_index' not in session:
+            print("target_index not in session")
             session['target_index'] = 0
+        print("Initial target_index:", session['target_index'])
+
+        if session['target_index'] >= len(targets):
+            session['target_index'] = 0
+        print("Adjusted target_index:", session['target_index'])
 
         if request.method == "POST":
             action = request.form.get('action')
 
             if action == "smash":
-                session['target_index'] += 1
+                query_filter = {"user_id": user.id}
+                update_operation = {"$addToSet": {"liked_users": targets[session['target_index']].id}}
+                liked_profiles.update_one(query_filter, update_operation)
+                # checking if target user likes back
+                likes_back = liked_profiles.find_one({"user_id": targets[session['target_index']].id})
+                if user.id in likes_back['liked_users']:
+                    mutual_match = True
+                    couple = chats.find_one({"users": {"$all": [username, targets[session['target_index']].name]}})
+                    if couple:
+                        room_code = couple["room_code"]
+                    else:
+                        room_code = str(uuid.uuid4())
+                        potential_couple = {
+                            "users": [username, targets[session['target_index']].name],
+                            "room_code": room_code,
+                            "chats": []
+                        }
+                        chats.insert_one(potential_couple)
+                    print(room_code)
+                    # return redirect(url_for('chat'))
             else:
-                session['target_index'] += 1
+                pass
+            session['target_index'] += 1
 
-            if session['target_index'] >= len(targets):
-                session['target_index'] = 0
+        if session['target_index'] >= len(targets):
+            session['target_index'] = 0
 
+        print("Updated target_index:", session['target_index'])
         current_target = targets[session['target_index']]
-        return render_template("swipe.html", target=current_target, username=username)
+        print("Current target:", current_target.name)
+        return render_template("swipe.html", target=current_target, username=username, mutual_match=mutual_match,
+                               room_code=room_code)
+
+
+@app.route('/chat/<user>/<room_code>', methods=["POST", "GET"])
+def chat(room_code, user):
+    print(room_code)
+    print(user)
+    result = chats.find_one({"room_code": room_code}, {"_id": 0, "users": 1})
+    target = [item for item in result['users'] if item != user][0]
+    print(target)
+    return render_template("chat.html", room_code=room_code, user=user, target=target)
 
 
 @app.route('/logout', methods=["POST", "GET"])
@@ -380,5 +442,51 @@ def logout():
     return redirect(url_for('login'))
 
 
+@socketio.on('connect')
+def handle_connect():
+    print("client connected")
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print("client disconnected")
+
+
+@socketio.on('join_room')
+def handle_join(data):
+    username = data['username']
+    room = data['room']
+    join_room(room)
+    # send(username + ' has entered the room.', to=room)
+    print(f"{username} has entered the room {room}")
+
+
+@socketio.on('leave_room')
+def handle_leave(data):
+    username = data['username']
+    room = data['room']
+    leave_room(room)
+    # send(username + ' has left the room.', to=room)
+    print(f"{username} has left the room {room}")
+
+
+@socketio.on('message')
+def handle_message(data):
+    time_now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    room = data['room']
+    message = data['message']
+    username = data['user']
+    # Adding to DB but need to implement end-to-end encryption.
+
+    query_filter = {"room_code": room}
+    update_operation = {"$addToSet": {"chats": {"user": username, "time_stamp": time_now, "message": message}}}
+    chats.update_one(query_filter, update_operation)
+
+    print(f"received message {message} from {username} from {room} ")
+    # Emitting back the received message to client
+    emit('message', {'user': username, 'time_stamp': time_now, 'message': message}, to=room)
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    # app.run(debug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)

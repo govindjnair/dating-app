@@ -137,6 +137,46 @@
          .inline-form {
             display: inline;
         }
+        .popup {
+            font-family: 'Caveat', cursive;
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #ccc;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-radius: 15px;
+            font-size: 1.4em;
+        }
+        .popup-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+        }
+        .popup button {
+            background-color: #ff69b4; /* Light pink color */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 10px; /* Rounded corners */
+            cursor: pointer;
+            font-size: 1em; /* Font size for buttons */
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .popup button:hover {
+            background-color: #ff85c1; /* Slightly darker pink on hover */
+            transform: scale(1.05); /* Slightly enlarge on hover */
+        }
 
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -195,5 +235,43 @@
             <button class="button" type="submit" value="smash" name="action" >😍</button>
         </form>
     </div>
+           <!-- Popup overlay -->
+    <div id="popupOverlay" class="popup-overlay"></div>
+
+    <!-- Popup content -->
+    <div id="popup" class="popup">
+        <h2>It's a Match!</h2>
+        <p>Click "Chat" to start chatting or "Continue" to see the next profile.</p>
+        <button onclick="redirectToChat()">Chat</button>
+        <button onclick="closePopup()">Continue</button>
+    </div>
+    <script>
+        // Function to show the popup
+        function showPopup() {
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('popupOverlay').style.display = 'block';
+        }
+
+        // Function to close the popup and continue to the next profile
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
+
+        // Function to redirect to the chat page
+        function redirectToChat() {
+            const roomCode = "{{ room_code }}"
+            const userName = "{{ username }}"
+            console.log("Room Code:", roomCode);
+            window.location.href = "{{ url_for('chat', user='', room_code='') }}" + userName + "/" + roomCode;
+        }
+
+        // Show the popup if there's a mutual match
+        {% if mutual_match %}
+        document.addEventListener('DOMContentLoaded', function() {
+            showPopup();
+        });
+        {% endif %}
+    </script>
 </body>
 </html>
