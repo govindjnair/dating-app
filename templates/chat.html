@@ -159,7 +159,28 @@
             document.getElementById('chatMessages').appendChild(messageElement);
             document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
         });
-
+        socket.on('loadMessages', (messages) => {
+            const messagesList = document.getElementById('chatMessages');
+            messagesList.innerHTML = '';
+            messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                if (message.user == user) {
+                    messageElement.classList.add('message', 'sent');
+                } else {
+                    messageElement.classList.add('message', 'received');
+                }
+                const messageContent = document.createElement('div');
+                messageContent.textContent = message.message;
+                const timeStamp = document.createElement('div');
+                timeStamp.classList.add('timestamp');
+                timeStamp.textContent = message.time_stamp;
+                messageElement.appendChild(messageContent);
+                messageElement.appendChild(timeStamp);
+                messagesList.appendChild(messageElement);
+     
+        });
+        messagesList.scrollTop = messagesList.scrollHeight;
+    });
     </script>
 </body>
 </html>

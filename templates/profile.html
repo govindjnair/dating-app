@@ -98,6 +98,9 @@
             top: 20px;
             right: 20px;
         }
+        .inline-form {
+            display: inline;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -105,7 +108,10 @@
 </head>
 <body>
     <div class="logout-container">
-        <form method="post" action="{{ url_for('logout') }}">
+        <form method="get" action="{{ url_for('chat_list', user=name) }}" class="inline-form">
+            <button class="button" type="submit">Chats</button>
+        </form>
+        <form method="post" action="{{ url_for('logout') }}" class="inline-form">
             <button class="button" type="submit">Logout</button>
         </form>
     </div>

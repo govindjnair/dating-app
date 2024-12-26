@@ -442,6 +442,18 @@ def logout():
     return redirect(url_for('login'))
 
 
+@app.route('/chat-list/<user>')
+def chat_list(user):
+    result = chats.find({"users": {"$in": [user]}}, {"_id": 0, "room_code": 1, "users": 1})
+    result_list = list(result)
+    print(result_list)
+    texted_with = [people for item in result_list for people in item['users'] if people != user]
+    room_codes = [item['room_code'] for item in result_list]
+    user_and_room = dict(zip(texted_with, room_codes))
+    print(user_and_room)
+    return render_template("chat_list.html", user_and_room=user_and_room, user=user)
+
+
 @socketio.on('connect')
 def handle_connect():
     print("client connected")
@@ -457,6 +469,8 @@ def handle_join(data):
     username = data['username']
     room = data['room']
     join_room(room)
+    messages = get_messages(room)
+    emit('loadMessages', messages, to=room)
     # send(username + ' has entered the room.', to=room)
     print(f"{username} has entered the room {room}")
 
@@ -485,6 +499,14 @@ def handle_message(data):
     print(f"received message {message} from {username} from {room} ")
     # Emitting back the received message to client
     emit('message', {'user': username, 'time_stamp': time_now, 'message': message}, to=room)
+
+
+def get_messages(room_code):
+    result = chats.find_one({"room_code": room_code}, {"_id": 0, "chats": 1})
+    if result:
+        return result['chats']
+    else:
+        return []
 
 
 if __name__ == "__main__":

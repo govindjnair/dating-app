@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chats</title>
+    <style>
+        body {
+            font-family: 'Caveat', cursive;
+            background-color: #f8e1e7; /* Light pink color */
+            background: linear-gradient(135deg, #f8e1e7, #f0c4d7);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            width: 80%;
+            max-width: 1000px;
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 20px;
+            margin-top: 10px;
+            min-height: 80vh;
+        }
+        .chat-header {
+            text-align: center;
+            font-size: 3em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .chat-list {
+            font-size: 1.6em;
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .chat-list li {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;;
+        }
+        .chat-list li:hover {
+            background-color: #f0c4d7;
+        }
+        .chat-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Your Chats</div>
+        <ul class="chat-list">
+            {% for key,value in user_and_room.items() %}
+             <li><a href="{{ url_for('chat', room_code=value, user=user) }}">Chat with {{ key }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
