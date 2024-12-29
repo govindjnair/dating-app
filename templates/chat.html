@@ -93,12 +93,18 @@
             background-color: #ff85c1; /* Slightly darker pink on hover */
             transform: scale(1.05); /* Slightly enlarge on hover */
         }
+        .tick {
+            font-size: 12px;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            Chat with {{ target }}
+            <button onclick="leaveChat()" style="float: left; margin-right: 10px;">Back</button>
+            <a href="{{ url_for('profile', username=target) }}?room_code={{ room_code }}">{{ target }}</a>
+
         </div>
         <div class="chat-messages" id="chatMessages">
         </div>
@@ -112,10 +118,12 @@
         const socket = io.connect('http://' + document.domain + ':' + location.port); // Declare the socket variable globally
         const roomCode = "{{ room_code }}"; // has to be a string
         const user = "{{ user }}";
+        const target = "{{ target }}"
 
         document.addEventListener('DOMContentLoaded', () => {
             joinRoom(roomCode);
         });
+
         socket.on('connect', () => {
             console.log('Connected to server');
         });
@@ -123,18 +131,25 @@
         socket.on('disconnect', () => {
             console.log('Disconnected from server');
         });
+
         function joinRoom(room) {
             socket.emit('join_room', {username: user, room: room});
         }
+
         function leaveRoom(room) {
             socket.emit('leave_room', {username: user, room: room});
+        }
+
+        function leaveChat() {
+            leaveRoom(roomCode);
+            window.location.href = "{{ url_for('chat_list', user=user) }}";
         }
 
         function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const messageText = messageInput.value.trim();
             if (messageText !== '') {
-                socket.emit('message', {room: roomCode, user:user, message: messageText});
+                socket.emit('message', {room: roomCode, target: target, user:user, message: messageText});
                 messageInput.value = '';
                 messageInput.focus();
                 // Scroll to the bottom of the chat
@@ -154,6 +169,18 @@
             const timeStamp = document.createElement('div');
             timeStamp.classList.add('timestamp')
             timeStamp.textContent = data.time_stamp;
+
+            const tick = document.createElement('span')
+            tick.classList.add('tick')
+            if (data.read) {
+                tick.textContent = '✔✔';
+                tick.style.color = 'blue';
+            } else {
+                tick.textContent = '✔';
+                tick.style.color = 'grey';
+            }
+            timeStamp.appendChild(tick)
+
             messageElement.appendChild(messageContent);
             messageElement.appendChild(timeStamp);
             document.getElementById('chatMessages').appendChild(messageElement);
@@ -174,6 +201,18 @@
                 const timeStamp = document.createElement('div');
                 timeStamp.classList.add('timestamp');
                 timeStamp.textContent = message.time_stamp;
+
+                const tick = document.createElement('span')
+                tick.classList.add('tick')
+                if (message.read) {
+                    tick.textContent = '✔✔';
+                    tick.style.color = 'blue';
+                } else {
+                    tick.textContent = '✔';
+                    tick.style.color = 'grey';
+                }
+                timeStamp.appendChild(tick)
+
                 messageElement.appendChild(messageContent);
                 messageElement.appendChild(timeStamp);
                 messagesList.appendChild(messageElement);

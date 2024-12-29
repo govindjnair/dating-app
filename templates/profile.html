@@ -101,20 +101,40 @@
         .inline-form {
             display: inline;
         }
+        .notification-badge {
+            position: relative;
+            display: inline-block;
+        }
+        .notification-badge .badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat&family=Dancing+Script:wght@400..700&display=swap" rel="stylesheet">
 </head>
 <body>
+    {% if current_user == name %}
     <div class="logout-container">
         <form method="get" action="{{ url_for('chat_list', user=name) }}" class="inline-form">
-            <button class="button" type="submit">Chats</button>
+                <button class="button notification-badge" type="submit">Chats
+                    {% if total_message_notifications > 0 %}
+                        <span class="badge">{{ total_message_notifications }}</span>
+                    {% endif %}
+                </button>
         </form>
         <form method="post" action="{{ url_for('logout') }}" class="inline-form">
             <button class="button" type="submit">Logout</button>
         </form>
     </div>
+    {% endif %}
     <div class="profile-container">
         <div class="left-container">
             <img src="{{ url_for('uploaded_file', filename=file_name) }}" alt="Profile Image" class="profile-image">
@@ -140,11 +160,18 @@
                 {% endfor %}
             </div>
              <div class="buttons">
+                 {% if current_user == name %}
                  <form method="post" action="{{ url_for('profile', username=name) }}">
                     <button class="button" type="submit" value="edit" name="action">Edit</button>
                     <button class="button" type="submit" value="start" name="action">Start</button>
                  </form>
+                 {% else %}
+                 <form method="post" action="{{ url_for('chat', user=current_user, room_code=room_code) }}">
+                    <button class="button" type="submit" value="edit" name="action">Chat</button>
+                 </form>
+                 {% endif %}
             </div>
+
             </div>
 
         </div>

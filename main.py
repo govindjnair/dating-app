@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import update, delete
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
+from flask_login import UserMixin, login_user, LoginManager, logout_user, login_required
 from sqlalchemy import Integer, String, Text
 from flask_ckeditor import CKEditor
 from werkzeug.utils import secure_filename
@@ -20,6 +20,7 @@ from pymongo import MongoClient
 from flask_pymongo import PyMongo
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 import datetime as dt
+from collections import Counter
 
 load_dotenv()
 
@@ -266,6 +267,25 @@ def upload_pics(username):
 @app.route("/profile/<username>", methods=["POST", "GET"])
 @verify_user
 def profile(username):
+    current_user = session.get('name')
+    room_code = request.args.get('room_code')
+    result = chats.find({"users": {"$in": [username]}}, {"_id": 0, "chats": 1})
+    result_list = list(result)
+    print(result_list)
+    # for item in result_list:
+    #     for thing in item['chats']:
+    #         if thing['read'] is False and thing['user'] != username:
+    #             answer.append(thing['user'])
+
+    answer = [element['user'] for item in result_list for element in item['chats'] if
+              element['read'] is False and element['user'] != username]
+
+    total_message_notifications = len(answer)
+    print(answer)
+    print(total_message_notifications)
+
+    # print(room_code)
+    # print(current_user)
     if request.method == "POST":
         action = request.form.get('action')
         if action == 'edit':
@@ -286,7 +306,8 @@ def profile(username):
         # print(hate_list)
         return render_template("profile.html", file_name=file_name, text_data=text_data, name=name, age=age,
                                love=love_list,
-                               hate=hate_list)
+                               hate=hate_list, current_user=current_user, room_code=room_code,
+                               total_message_notifications=total_message_notifications)
     return "User not found", 404
 
 
@@ -444,14 +465,18 @@ def logout():
 
 @app.route('/chat-list/<user>')
 def chat_list(user):
-    result = chats.find({"users": {"$in": [user]}}, {"_id": 0, "room_code": 1, "users": 1})
+    result = chats.find({"users": {"$in": [user]}}, {"_id": 0, "room_code": 1, "users": 1, "chats": 1})
     result_list = list(result)
     print(result_list)
+    answer = [element['user'] for item in result_list for element in item['chats'] if
+              element['read'] is False and element['user'] != user]
+    notifications_per_user = Counter(answer)
+    print(notifications_per_user)
     texted_with = [people for item in result_list for people in item['users'] if people != user]
     room_codes = [item['room_code'] for item in result_list]
     user_and_room = dict(zip(texted_with, room_codes))
     print(user_and_room)
-    return render_template("chat_list.html", user_and_room=user_and_room, user=user)
+    return render_template("chat_list.html", user_and_room=user_and_room, user=user, notifications_per_user=notifications_per_user)
 
 
 @socketio.on('connect')
@@ -464,11 +489,27 @@ def handle_disconnect():
     print("client disconnected")
 
 
+rooms_and_users = {}
+
+
 @socketio.on('join_room')
 def handle_join(data):
     username = data['username']
     room = data['room']
     join_room(room)
+
+    # marking all messages as read
+    query_filter = {"room_code": room}
+    update_operation = {"$set": {"chats.$[elem].read": True}}
+    array_filters = [{"elem.user": {"$ne": username}, "elem.read": False}]
+    chats.update_many(query_filter, update_operation, array_filters=array_filters)
+
+    if room in rooms_and_users:
+        if username not in rooms_and_users[room]:
+            rooms_and_users[room].append(username)
+    else:
+        rooms_and_users[room] = [username]
+    print(rooms_and_users)
     messages = get_messages(room)
     emit('loadMessages', messages, to=room)
     # send(username + ' has entered the room.', to=room)
@@ -481,6 +522,10 @@ def handle_leave(data):
     room = data['room']
     leave_room(room)
     # send(username + ' has left the room.', to=room)
+    if room in rooms_and_users:
+        if username in rooms_and_users[room]:
+            rooms_and_users[room].remove(username)
+    print(rooms_and_users)
     print(f"{username} has left the room {room}")
 
 
@@ -490,15 +535,23 @@ def handle_message(data):
     room = data['room']
     message = data['message']
     username = data['user']
-    # Adding to DB but need to implement end-to-end encryption.
-
+    target = data['target']
     query_filter = {"room_code": room}
-    update_operation = {"$addToSet": {"chats": {"user": username, "time_stamp": time_now, "message": message}}}
+    if target in rooms_and_users[room]:
+        # Adding to DB but need to implement end-to-end encryption.
+        update_operation = {
+            "$addToSet": {"chats": {"user": username, "time_stamp": time_now, "message": message, "read": True}}}
+        to_emit = {'user': username, 'time_stamp': time_now, 'message': message, "read": True}
+    else:
+        update_operation = {
+            "$addToSet": {"chats": {"user": username, "time_stamp": time_now, "message": message, "read": False}}}
+        to_emit = {'user': username, 'time_stamp': time_now, 'message': message, "read": False}
+
     chats.update_one(query_filter, update_operation)
 
     print(f"received message {message} from {username} from {room} ")
     # Emitting back the received message to client
-    emit('message', {'user': username, 'time_stamp': time_now, 'message': message}, to=room)
+    emit('message', to_emit, to=room)
 
 
 def get_messages(room_code):
