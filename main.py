@@ -391,7 +391,7 @@ def cupid(user):
     result_list = (list(result))
     matches = [name for item in result_list for name in item['users'] if name != user.name]
     print(matches)
-    for match in potential_matches[:]: # hallow copy
+    for match in potential_matches[:]: # shallow copy
         if match.name in matches:
             print(match.name)
             potential_matches.remove(match)
@@ -458,6 +458,7 @@ def swiper(username):
 
 
 @app.route('/chat/<user>/<room_code>', methods=["POST", "GET"])
+@login_required
 def chat(room_code, user):
     print(room_code)
     print(user)
@@ -474,6 +475,7 @@ def logout():
 
 
 @app.route('/chat-list/<user>')
+@login_required
 def chat_list(user):
     result = chats.find({"users": {"$in": [user]}}, {"_id": 0, "room_code": 1, "users": 1, "chats": 1})
     result_list = list(result)
