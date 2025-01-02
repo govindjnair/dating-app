@@ -133,6 +133,7 @@
             font-size: 1.5em;
             color: #333;
             cursor: pointer;
+            position: relative;
         }
          .inline-form {
             display: inline;
@@ -177,6 +178,14 @@
             background-color: #ff85c1; /* Slightly darker pink on hover */
             transform: scale(1.05); /* Slightly enlarge on hover */
         }
+         .small-button .heart-emoji {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 1em;
+            color: red;
+            display: none; /* Initially hidden */
+        }
 
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -186,7 +195,9 @@
 <body>
     <div class="logout-container">
         <form method="get" action="{{ url_for('profile', username=username) }}" class="inline-form">
-            <button class="small-button" type="submit">Profile</button>
+            <button class="small-button" type="submit">Profile
+                <span class="heart-emoji">❤️</span>
+            </button>
         </form>
         <form method="post" action="{{ url_for('logout') }}" class="inline-form">
             <button class="small-button" type="submit">Logout</button>
@@ -256,6 +267,7 @@
         function closePopup() {
             document.getElementById('popup').style.display = 'none';
             document.getElementById('popupOverlay').style.display = 'none';
+            document.querySelector('.heart-emoji').style.display = 'inline';            
         }
 
         // Function to redirect to the chat page
@@ -272,6 +284,7 @@
             showPopup();
         });
         {% endif %}
+
     </script>
 </body>
 </html>

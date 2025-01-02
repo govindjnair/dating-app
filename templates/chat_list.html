@@ -30,6 +30,7 @@
             min-height: 80vh;
         }
         .chat-header {
+
             text-align: center;
             font-size: 3em;
             color: #333;
@@ -64,6 +65,33 @@
             padding: 5px 10px;
             font-size: 0.8em;
         }
+       .back-button {
+            margin-left: 150px;
+            margin-top: 10px;
+            position: absolute;
+            left: 0;
+            font-size: 0.9em;
+            padding: 10px 20px;
+            background-color: #ff69b4; /* Light pink color */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .popup-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            font-family: 'Arial', sans-serif;
+    }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,6 +99,7 @@
 </head>
 <body>
     <div class="chat-container">
+        <button class="back-button" onclick="goBack()">Back</button>
         <div class="chat-header">Your Chats</div>
         <ul class="chat-list">
             {% for key,value in user_and_room.items() %}
@@ -82,5 +111,39 @@
             {% endfor %}
         </ul>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script>
+        const socket = io.connect('http://' + document.domain + ':' + location.port); // Declare the socket variable globally
+        const user = "{{ user }}";
+
+        document.addEventListener('DOMContentLoaded', () => {
+            joinNotificationRoom(user); // Join the user's own notification room
+        });
+
+        function joinNotificationRoom(user) {
+            socket.emit('join_notification_room', {username: user, room: user});
+        }
+
+        function goBack() {
+            window.location.href = "{{ url_for('profile', username=user) }}";
+        }
+
+        socket.on('notification', (data) => {
+            console.log('received notification data')
+            // Show popup notification
+            var popup = document.createElement('div');
+            popup.className = 'popup-notification';
+            popup.textContent = `New message from ${data.from}`;
+            document.body.appendChild(popup);
+            popup.style.display = 'block';
+
+            // Hide the popup after 3 seconds
+            setTimeout(() => {
+            popup.style.display = 'none';
+            document.body.removeChild(popup);
+        }, 3000);
+    });
+    
+    </script>
 </body>
 </html>

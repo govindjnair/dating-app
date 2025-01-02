@@ -97,6 +97,18 @@
             font-size: 12px;
             margin-left: 5px;
         }
+         .popup-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+         }
     </style>
 </head>
 <body>
@@ -122,6 +134,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             joinRoom(roomCode);
+            joinNotificationRoom(user); // Join the user's own notification room
         });
 
         socket.on('connect', () => {
@@ -134,6 +147,10 @@
 
         function joinRoom(room) {
             socket.emit('join_room', {username: user, room: room});
+        }
+
+        function joinNotificationRoom(user) {
+            socket.emit('join_notification_room', {username: user, room: user});
         }
 
         function leaveRoom(room) {
@@ -220,6 +237,21 @@
         });
         messagesList.scrollTop = messagesList.scrollHeight;
     });
+        socket.on('notification', (data) => {
+        // Show popup notification
+        var popup = document.createElement('div');
+        popup.className = 'popup-notification';
+        popup.textContent = `New message from ${data.from}`;
+        document.body.appendChild(popup);
+        popup.style.display = 'block';
+
+        // Hide the popup after 3 seconds
+        setTimeout(() => {
+            popup.style.display = 'none';
+            document.body.removeChild(popup);
+        }, 3000);
+    });
+
     </script>
 </body>
 </html>

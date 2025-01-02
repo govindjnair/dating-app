@@ -386,6 +386,16 @@ def cupid(user):
 
     # for match in potential_matches:
     #     print(match.name)
+
+    result = chats.find({"users": {"$in": [user.name]}}, {"_id": 0, "users": 1})
+    result_list = (list(result))
+    matches = [name for item in result_list for name in item['users'] if name != user.name]
+    print(matches)
+    for match in potential_matches[:]: # hallow copy
+        if match.name in matches:
+            print(match.name)
+            potential_matches.remove(match)
+
     return potential_matches
 
 
@@ -476,7 +486,8 @@ def chat_list(user):
     room_codes = [item['room_code'] for item in result_list]
     user_and_room = dict(zip(texted_with, room_codes))
     print(user_and_room)
-    return render_template("chat_list.html", user_and_room=user_and_room, user=user, notifications_per_user=notifications_per_user)
+    return render_template("chat_list.html", user_and_room=user_and_room, user=user,
+                           notifications_per_user=notifications_per_user)
 
 
 @socketio.on('connect')
@@ -498,7 +509,7 @@ def handle_join(data):
     room = data['room']
     join_room(room)
 
-    # marking all messages as read
+    # marking all unread messages to the user as read when user joins the room
     query_filter = {"room_code": room}
     update_operation = {"$set": {"chats.$[elem].read": True}}
     array_filters = [{"elem.user": {"$ne": username}, "elem.read": False}]
@@ -514,6 +525,14 @@ def handle_join(data):
     emit('loadMessages', messages, to=room)
     # send(username + ' has entered the room.', to=room)
     print(f"{username} has entered the room {room}")
+
+
+@socketio.on('join_notification_room')
+def handle_notification(data):
+    username = data['username']
+    room = data['room']
+    join_room(room)
+    print(f"{username} has joined their notification room {room}")
 
 
 @socketio.on('leave_room')
@@ -548,6 +567,8 @@ def handle_message(data):
         to_emit = {'user': username, 'time_stamp': time_now, 'message': message, "read": False}
 
     chats.update_one(query_filter, update_operation)
+    emit('notification', {'from': username, 'to': target, 'type': 'New message'}, to=target)
+    print(f"Notification emitted to {target}")
 
     print(f"received message {message} from {username} from {room} ")
     # Emitting back the received message to client
