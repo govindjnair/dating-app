@@ -34,7 +34,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 socketio = SocketIO(app)
 
 # MongoDB setup
-app.config['MONGO_URI'] = "mongodb://localhost:27017/userLikes"
+app.config['MONGO_URI'] = os.environ.get("MONGO_DB_URI")
 mongo = PyMongo(app)
 liked_profiles = mongo.db.liked_profiles  # This accesses the liked_profiles collection within the userLikes database.
 chats = mongo.db.chats
