@@ -261,7 +261,7 @@ def upload_pics(username):
                 }
                 liked_profiles.insert_one(new_like)
                 print(liked_profiles)
-                return redirect(url_for('profile', username=username))
+                return redirect(url_for('login'))
             else:
                 return render_template("upload_pic.html", form=new_form, user=user)
 
