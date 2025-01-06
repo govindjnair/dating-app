@@ -21,6 +21,7 @@ from flask_pymongo import PyMongo
 from flask_socketio import SocketIO, send, emit, join_room, leave_room
 import datetime as dt
 from collections import Counter
+import idrivee2
 
 load_dotenv()
 
@@ -32,7 +33,6 @@ ckeditor = CKEditor(app)
 bootstrap = Bootstrap5(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 socketio = SocketIO(app)
-
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -242,7 +242,8 @@ def upload_pics(username):
                 if file and file.filename != '':
                     if verify_files(file.filename):
                         unique_filename = str(uuid.uuid4()) + "_" + secure_filename(file.filename)
-                        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+                        # file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+                        idrivee2.upload(file=file, filename=unique_filename)
                         pp_path = unique_filename
                     else:
                         flash("Invalid file type")
@@ -304,6 +305,7 @@ def profile(username):
         text_data = user.about
         name = user.name
         age = user.age
+        profile_pic_url = get_uploaded_file(filename=file_name)
         love_list = [item.tag_value for item in user.tags if item.tag == "love"]
         hate_list = [item.tag_value for item in user.tags if item.tag == "hate"]
         # print(love_list)
@@ -311,13 +313,17 @@ def profile(username):
         return render_template("profile.html", file_name=file_name, text_data=text_data, name=name, age=age,
                                love=love_list,
                                hate=hate_list, current_user=current_user, room_code=room_code,
-                               total_message_notifications=total_message_notifications)
+                               total_message_notifications=total_message_notifications, profile_pic_url=profile_pic_url)
     return "User not found", 404
 
 
 @app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+def get_uploaded_file(filename):
+    # return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    url = idrivee2.download(filename=filename)
+    # print(url)
+    return url
+    # return jsonify({'url': url})
 
 
 def cupid(user):
@@ -395,7 +401,7 @@ def cupid(user):
     result_list = (list(result))
     matches = [name for item in result_list for name in item['users'] if name != user.name]
     print(matches)
-    for match in potential_matches[:]: # shallow copy
+    for match in potential_matches[:]:  # shallow copy
         if match.name in matches:
             print(match.name)
             potential_matches.remove(match)
@@ -456,9 +462,10 @@ def swiper(username):
 
         print("Updated target_index:", session['target_index'])
         current_target = targets[session['target_index']]
+        profile_pic_url = get_uploaded_file(current_target.pp_path)
         print("Current target:", current_target.name)
         return render_template("swipe.html", target=current_target, username=username, mutual_match=mutual_match,
-                               room_code=room_code)
+                               room_code=room_code, profile_pic_url=profile_pic_url)
 
 
 @app.route('/chat/<user>/<room_code>', methods=["POST", "GET"])

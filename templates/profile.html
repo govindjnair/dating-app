@@ -150,7 +150,7 @@
     {% endif %}
     <div class="profile-container">
         <div class="left-container">
-            <img src="{{ url_for('uploaded_file', filename=file_name) }}" alt="Profile Image" class="profile-image">
+            <img src="{{ profile_pic_url }}" alt="Profile Image" id="profile-image" class="profile-image">
             <h2>
             <div class="profile">{{ name }}, {{age}}</div>
             </h2>
@@ -190,6 +190,18 @@
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
         <script>
+            // // fetch the pre-signed url
+            // fetch('/uploads/{{ file_name }}')
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         document.getElementById(id="profile-image").src = data.url;
+
+            //     })
+            //     .catch(error => {
+            //         console.error('Error fetching the presigned URL:', error);
+            //     });
+
+            
             const socket = io.connect('http://' + document.domain + ':' + location.port); // Declare the socket variable globally
             const user = "{{ name }}";
 

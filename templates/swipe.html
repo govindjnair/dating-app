@@ -206,7 +206,7 @@
     <div class="polaroid-container" id="polaroidContainer">
         <div class="polaroid">
             <div class="polaroid-front">
-                <img src="{{ url_for('uploaded_file', filename=target.pp_path) }}" alt="Profile Photo" class="polaroid-photo">
+                <img src="{{ profile_pic_url }}" alt="Profile Photo" class="polaroid-photo">
                 <div class="polaroid-info">
                     <div class="name-age">{{target.name}}, {{target.age}}</div>
                     <div class="interests">
