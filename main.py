@@ -22,17 +22,19 @@ from flask_socketio import SocketIO, send, emit, join_room, leave_room
 import datetime as dt
 from collections import Counter
 import idrivee2
+from flask_cors import CORS
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SECRET_KEY'] = os.getenv("FLASK_KEY")
 # UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER")
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 ckeditor = CKEditor(app)
 bootstrap = Bootstrap5(app)
 # app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # if not os.path.exists(UPLOAD_FOLDER):
 #     os.makedirs(UPLOAD_FOLDER)
