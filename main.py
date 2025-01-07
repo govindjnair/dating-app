@@ -27,15 +27,15 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("FLASK_KEY")
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER")
+# UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER")
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 ckeditor = CKEditor(app)
 bootstrap = Bootstrap5(app)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 socketio = SocketIO(app)
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+# if not os.path.exists(UPLOAD_FOLDER):
+#     os.makedirs(UPLOAD_FOLDER)
 
 # MongoDB setup
 app.config['MONGO_URI'] = os.environ.get("MONGO_DB_URI")
